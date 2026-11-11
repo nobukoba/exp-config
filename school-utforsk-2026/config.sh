@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Override these values through the environment before running run.sh.
+HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+: "${REDIS_HOST:=127.0.0.1}"
+: "${REDIS_PORT:=6379}"
+: "${DAQSERVICE_DB:=0}"
+: "${METRICS_DB:=1}"
+: "${PARAMETER_DB:=2}"
+: "${NESTDAQ_HOST_IP:=127.0.0.1}"
+: "${STF_TO_TFB_HOST:=127.0.0.1}"
+: "${STF_TO_TFB_PORT:=5500}"
+: "${TFB_OUTPUT_HOST:=127.0.0.1}"
+: "${TFB_OUTPUT_PORT:=5501}"
+: "${TFB_DECIMATION_FACTOR:=1000}"
+: "${NESTDAQ_SEVERITY:=info}"
+: "${RAWDATA_DIR:=${HERE}/rawdata}"
+: "${LOG_DIR:=${HERE}/logs}"
