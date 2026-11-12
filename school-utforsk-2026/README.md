@@ -2,7 +2,7 @@
 
 SPADI の `user-daq` / `devel-daq` / `full` コンテナ内で実行する、RARiS AC-LGAD の再生例です。
 `STFBFilePlayer` 3個 → `TimeFrameBuilder` 1個 → `FileSink` 1個を起動します。
-Redis、web-ctrl、xterm、tmux は起動しません。
+Redis、web-ctrl、xterm は起動しません。既存の tmux セッションに5個の window を追加します。
 
 ## 実行
 
@@ -10,16 +10,20 @@ Redis、web-ctrl、xterm、tmux は起動しません。
 Redis と web-ctrl を先に起動し、他の DAQ プロセスが停止している状態で実行します。
 
 ```bash
+tmux new-session -s school
+# tmux 内で実行
 cd /path/to/exp-config/school-utforsk-2026
 ./run.sh
 ```
 
 Redis の既定値は `127.0.0.1:6379`、DB は daq_service=0、metrics=1、parameters=2 です。
 web-ctrl も同じ Redis の daq_service DB に接続してください。
-`run.sh` は再生用のパラメータとトポロジーの対象キーを書き込みます。
+`mq-param.sh` がパラメータ、`topology.sh` がトポロジーを設定します。
+`run.sh` は両方を実行し、現在の tmux セッションに各デバイス名の window を作って戻ります。
+window の切り替えは `Ctrl+b` → `w`。各 window でログを確認できます。
 DB の flush は行いませんが、同名サービスの設定を更新するため、他の DAQ と同時使用しないでください。
 別構成の古い topology キーが残っていない専用の Redis DB を使用してください。
-更新前の構成が動いている場合は、web-ctrl で停止・終了してから `run.sh` を終了し、
+更新前の構成が動いている場合は、web-ctrl で停止・終了し、古いデバイス window を閉じてから、
 `git pull` 後に起動し直してください。対象 endpoint の古い固定 address は再設定時に削除します。
 
 web-ctrl で `STFBFilePlayer-0`〜`2` 、`TimeFrameBuilder-0`、`FileSink-0` を選び、run number を設定し、
@@ -42,11 +46,12 @@ OUTPUT_DIR=/workspace/replay-output ./run.sh
 入力データは変更しません。`openmode=create` により、同じ出力ファイルがある場合は開かず、上書きを防ぎます。
 web-ctrl で未使用の run number を指定してください。保存エラーは `logs/FileSink-0.log` で確認できます。
 保存の完了には web-ctrl の **Stop** を使い、FileSink が停止したことを確認してください。
-Ctrl+C は強制終了用です。通常の保存完了操作には使わないでください。
+デバイス window 内の Ctrl+C はそのプロセスを中断します。通常の保存完了操作には使わないでください。
 
 終了時は web-ctrl で **Stop → Reset Task → Reset Device → End**。
-`run.sh` はいずれかのプロセスが終了すると残りも停止します。
-端末で Ctrl+C を押しても起動した5プロセスを停止します。Redis と web-ctrl はそのままです。
+終了したプロセスの window はログ確認のため残ります。確認後 `Ctrl+b` → `&` で閉じてください。
+再起動前に5個のデバイス window を閉じてください。同名 window がある場合は二重起動を拒否します。
+Redis と web-ctrl はそのままです。
 ログは `logs/<device-id>.log` に保存され、再起動すると上書きされます。
 
 環境変数で Redis の接続先などを変更できます（`config.sh` 参照）。例:
@@ -57,7 +62,8 @@ REDIS_HOST=redis REDIS_PORT=6379 NESTDAQ_HOST_IP=192.168.1.10 ./run.sh
 
 `127.0.0.1` はコンテナ自身を指します。別コンテナの Redis を使う場合は、到達できるホスト名を指定してください。
 `NESTDAQ_PLUGIN_LIBDIR` で NestDAQ plugin のディレクトリを指定できます。
-パラメータだけ書き込む場合は `./configure.sh` を使います。
+パラメータだけの更新は `./mq-param.sh`、接続設定だけの更新は `./topology.sh` を使います。
+設定変更はデバイス停止・終了後に行ってください。
 
 ## raw データと実装の出典
 
