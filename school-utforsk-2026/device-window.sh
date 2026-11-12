@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-export NESTDAQ_CONFIG="${HERE}/config.sh"
+export NESTDAQ_CONFIG="${NESTDAQ_CONFIG:-${HERE}/config.sh}"
 source "$NESTDAQ_CONFIG"
 device="$1"; id="$2"
 # Keep the last output visible even if startup fails.

@@ -70,6 +70,37 @@ REDIS_HOST=redis REDIS_PORT=6379 NESTDAQ_HOST_IP=192.168.1.10 ./run.sh
 再生を遅くするための `wait` 設定は削除し、STFBFilePlayer の既定値（待機なし）に戻しています。
 入力ファイルの再生が終了すると READY に戻ります。ループ再生はしません。
 
+## 実機取得: run2.sh
+
+`192.168.10.16` の AMANEQ から取得して FileSink に保存する場合は、tmux 内で実行します。
+再生用の `run.sh` と同時には動かさないでください。切り替え前に web-ctrl で Stop → Reset Task → Reset Device → End、続いて `./stop.sh` で window を閉じます。
+
+```bash
+./run2.sh
+```
+
+`config2.sh`、`mq-param2.sh`、`topology2.sh` を使い、次の4 window を作ります。
+
+```text
+AmQStrTdcSampler-0 → STFBuilder-0 → TimeFrameBuilder-0 → FileSink-0
+```
+
+web-ctrl で4個すべてを選び、未使用の run number を指定して
+**Init Device and Connection → Init Task → Run**。
+既定の保存先は `output-live/runNNNNNN.dat` です。
+正常終了は **Stop → Reset Task → Reset Device → End**、window の片付けは `./stop.sh`。
+
+IP は `AMANEQ_IP=192.168.10.16`、TDC 種別は既存コンテナ recipe と同じ LR-TDC の `TDC_TYPE=1`、
+`MAX_HBF=4`、`TFB_DECIMATION_FACTOR=0` です。変更する場合は `config2.sh` または環境変数を使います。
+
+```bash
+AMANEQ_IP=192.168.10.16 OUTPUT_DIR=/workspace/live-data ./run2.sh
+```
+
+Redis と web-ctrl は自分で起動してください。FEE の初期化・マスク・取得許可は事前に設定済みである必要があります。
+`run2.sh` は FEE 設定を書き換えません。コンテナから実機へのネットワーク到達性も必要です。
+実機を使った取得・保存はこの環境では未検証です。
+
 ## raw データと実装の出典
 
 同梱データは SPADI の `raris-ac-lgad` recipe と同じ公開サンプル（run 20）です。

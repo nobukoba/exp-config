@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Stop only the five device windows created by run.sh in this tmux session.
+# Stop only the device windows created by run.sh or run2.sh in this tmux session.
 # Redis, web-ctrl and the user's other windows are intentionally untouched.
 if [[ -z "${TMUX:-}" ]]; then
   echo "Run stop.sh inside the tmux session used for run.sh." >&2
   exit 1
 fi
 session="$(tmux display-message -p '#{session_id}')"
-devices=(FileSink-0 TimeFrameBuilder-0 STFBFilePlayer-0 STFBFilePlayer-1 STFBFilePlayer-2)
+devices=(FileSink-0 TimeFrameBuilder-0 STFBFilePlayer-0 STFBFilePlayer-1 STFBFilePlayer-2 STFBuilder-0 AmQStrTdcSampler-0)
 targets=()
 
 # Match exact window names, and retain window IDs to avoid target ambiguity.

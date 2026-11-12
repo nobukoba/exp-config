@@ -9,6 +9,8 @@ endpoint() {
   redis -n "$DAQSERVICE_DB" del "$key" >/dev/null
   redis -n "$DAQSERVICE_DB" hset "$key" "${@:3}" >/dev/null
 }
+# Remove live source links when switching back to replay.
+redis -n "$DAQSERVICE_DB" del 'daq_service:topology:link:AmQStrTdcSampler:out,STFBuilder:in' 'daq_service:topology:link:STFBuilder:out,TimeFrameBuilder:in' >/dev/null
 # Same bind/connect pattern as the established RCNP replay configurations.
 # FairMQ assigns bind ports dynamically; no fixed ports are required.
 endpoint STFBFilePlayer out type push method connect autoSubChannel true enable-uds false
