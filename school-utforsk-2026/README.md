@@ -65,6 +65,20 @@ REDIS_HOST=redis REDIS_PORT=6379 NESTDAQ_HOST_IP=192.168.1.10 ./run.sh
 パラメータだけの更新は `./mq-param.sh`、接続設定だけの更新は `./topology.sh` を使います。
 設定変更はデバイス停止・終了後に行ってください。
 
+## 再生速度（STFBFilePlayer）
+
+STFBFilePlayer の `wait` オプションで、1回の `ConditionalRun()` による送信処理後の待ち時間をミリ秒単位で設定できます。
+既定値は `STFB_WAIT_MS=100`（100 ms）です。3台すべてに適用されます。0 にすると待機しません。
+
+```bash
+STFB_WAIT_MS=500 ./run.sh   # 送信処理ごとに 500 ms 待機
+STFB_WAIT_MS=0 ./run.sh     # 待機なし（従来の再生速度）
+```
+
+`mq-param.sh` が Redis DB 2 の `parameters:STFBFilePlayer-{0,1,2}` に `wait` を設定します。
+変更した値を確実に反映するには web-ctrl で正常終了し、デバイスを再起動して `Init Task` を実行してください。
+これは再生速度を遅くしますが、ファイル終端まで再生したら STFBFilePlayer は READY に戻ります。ループ再生はしません。
+
 ## raw データと実装の出典
 
 同梱データは SPADI の `raris-ac-lgad` recipe と同じ公開サンプル（run 20）です。
