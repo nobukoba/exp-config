@@ -67,10 +67,8 @@ REDIS_HOST=redis REDIS_PORT=6379 NESTDAQ_HOST_IP=192.168.1.10 ./run.sh
 
 ## 再生速度（STFBFilePlayer）
 
-`mq-param.sh` で3台の STFBFilePlayer に `wait 500` を直書きしています。
-各送信処理後に500 ms待機します。環境変数による速度指定は不要です。
-再生終了後は READY に戻り、ループ再生はしません。
-変更を反映するには web-ctrl で正常終了した後に再起動してください。
+再生を遅くするための `wait` 設定は削除し、STFBFilePlayer の既定値（待機なし）に戻しています。
+入力ファイルの再生が終了すると READY に戻ります。ループ再生はしません。
 
 ## raw データと実装の出典
 
