@@ -19,13 +19,18 @@ web-ctrl も同じ Redis の daq_service DB に接続してください。
 `run.sh` は再生用のパラメータとトポロジーの対象キーを書き込みます。
 DB の flush は行いませんが、同名サービスの設定を更新するため、他の DAQ と同時使用しないでください。
 別構成の古い topology キーが残っていない専用の Redis DB を使用してください。
+更新前の構成が動いている場合は、web-ctrl で停止・終了してから `run.sh` を終了し、
+`git pull` 後に起動し直してください。対象 endpoint の古い固定 address は再設定時に削除します。
 
 web-ctrl で `STFBFilePlayer-0`〜`2` 、`TimeFrameBuilder-0`、`FileSink-0` を選び、run number を設定し、
 **Init Device and Connection → Init Task → Run** の順に操作します。
 各段階で全プロセスの状態遷移を確認してください。
-TimeFrameBuilder の出力 `tcp://127.0.0.1:5501` を FileSink が受信し、
+TimeFrameBuilder の出力を FileSink が受信し、
 既定では `output/runNNNNNN.dat`（web-ctrl で指定した run number）に保存します。
-DQM 出力は `tcp://127.0.0.1:5502`（PUB、購読なしでも動作）です。
+固定ポートは指定せず、FairMQ が bind ポートを選び、NestDAQ が Redis 経由で接続先を解決します。
+STFBFilePlayer out（connect）→ TimeFrameBuilder in（bind）、
+TimeFrameBuilder out（connect）→ FileSink in（bind）の構成です。
+FileSink の DQM 出力も自動ポートの PUB で、購読なしでも動作します。
 同じ PUSH 出力に別の PULL consumer を接続するとデータが分配されるため、保存中は接続しないでください。
 
 保存先を変更する例（コンテナから書き込める、永続化されたパスを指定）:
@@ -44,7 +49,7 @@ Ctrl+C は強制終了用です。通常の保存完了操作には使わない�
 端末で Ctrl+C を押しても起動した5プロセスを停止します。Redis と web-ctrl はそのままです。
 ログは `logs/<device-id>.log` に保存され、再起動すると上書きされます。
 
-環境変数で接続先やポートを変更できます（`config.sh` 参照）。例:
+環境変数で Redis の接続先などを変更できます（`config.sh` 参照）。例:
 
 ```bash
 REDIS_HOST=redis REDIS_PORT=6379 NESTDAQ_HOST_IP=192.168.1.10 ./run.sh
