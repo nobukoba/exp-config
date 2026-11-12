@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname -- "${BASH_SOURCE[0]}")/config2.sh"
-redis() { redis-cli --raw -h "$REDIS_HOST" -p "$REDIS_PORT" "$@"; }
+source "${HERE}/redis-common.sh"
 [[ "$(redis ping)" == PONG ]] || { echo "Redis is not ready" >&2; exit 1; }
 endpoint() {
   local key="daq_service:topology:endpoint:$1:$2"

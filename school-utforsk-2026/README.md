@@ -8,6 +8,15 @@ Redis、web-ctrl、xterm は起動しません。既存の tmux セッション�
 
 このディレクトリをコンテナから見える場所に clone / mount してください。
 Redis と web-ctrl を先に起動し、他の DAQ プロセスが停止している状態で実行します。
+Redis は **RedisTimeSeries** の `TS.ADD` が使えることが必要です。SPADI 内で Redis を手動起動する例:
+
+```bash
+redis-server --loadmodule /opt/spadi/lib/redistimeseries.so
+```
+
+通常の Redis だけでは TimeFrameBuilder が Run 後に終了します。
+`run.sh` / `run2.sh` は RedisTimeSeries と他の登録済み DAQ の有無を確認し、
+起動した全インスタンスが IDLE になってから成功を表示します。
 
 ```bash
 tmux new-session -s school
@@ -28,7 +37,7 @@ DB の flush は行いませんが、同名サービスの設定を更新する�
 
 web-ctrl で `STFBFilePlayer-0`〜`2` 、`TimeFrameBuilder-0`、`FileSink-0` を選び、run number を設定し、
 **Init Device and Connection → Init Task → Run** の順に操作します。
-各段階で全プロセスの状態遷移を確認してください。
+各段階で全プロセスの状態遷移を確認してください。特に実機の STFBuilder は Sampler からの情報を待つため、Init Task も全デバイスを選んで実行してください。
 TimeFrameBuilder の出力を FileSink が受信し、
 既定では `output/runNNNNNN.dat`（web-ctrl で指定した run number）に保存します。
 固定ポートは指定せず、FairMQ が bind ポートを選び、NestDAQ が Redis 経由で接続先を解決します。
@@ -113,4 +122,26 @@ Redis と web-ctrl は自分で起動してください。FEE の初期化・マ
 - 参考実装: [spadi-containers-second-trial](https://github.com/nobukoba/spadi-containers-second-trial/tree/2932ddddad9624cd7ed33504318b3f68664a018f/scripts/nestdaq)
   の `raris-ac-lgad` と `common`。`start-device.sh` / `config-common.sh` は同コミットから同梱しています。
 
-この環境では DAQ バイナリがないため、実データのエンドツーエンド再生は未検証です。
+## 検証
+
+公開 `spadi-user-daq` イメージ（source commit `c5301bf21ff0fe438a358dba9f5a51a848e54e17`）の
+実際の tmux、Redis 6.0.10 + RedisTimeSeries、NestDAQ バイナリで確認しました。
+
+- 実機構成: 4プロセスが IDLE → DEVICE READY → READY。実機アクセスを伴う Run は未検証。
+- 再生構成: 生データ3本 → TimeFrameBuilder → FileSink → 正常 Stop。
+- 保存結果: 2,106,136 bytes、3ソースを含む完全な TimeFrame 2,815個、正常な FileSink header/trailer。
+- 固定ポートなし。FairMQ がチャネルを確実に構築できるよう、起動引数にもチャネル定義を渡します。
+
+同じ確認をコンテナ内で再実行するには:
+
+```bash
+bash tests/container-check.sh
+```
+
+テストは専用 Redis（既定16380番）・tmux セッション・`/tmp/utforsk-check.*` を使います。
+既存の Redis と実機には接続せず、実機構成には Run を送信しません。
+ログと保存ファイルはテスト終了後も表示された `/tmp` のディレクトリに残します。
+
+実機取得にはコンテナから TCP/24 への到達性と FEE の適切な初期設定が必要です。
+データを取りこぼしにくくする終了順は、Sampler を Stop、STFBuilder を Stop、
+TimeFrameBuilder を Stop、最後に FileSink を Stop です。各段階の停止と転送完了を確認してください。

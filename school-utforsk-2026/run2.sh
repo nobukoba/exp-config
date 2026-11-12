@@ -9,7 +9,9 @@ for cmd in tmux redis-cli AmQStrTdcSampler STFBuilder TimeFrameBuilder FileSink 
 done
 session="$(tmux display-message -p '#{session_id}')"
 windows=(FileSink-0 TimeFrameBuilder-0 STFBuilder-0 AmQStrTdcSampler-0)
-mkdir -p "$LOG_DIR"
+mkdir -p "$LOG_DIR" "$OUTPUT_DIR"
+LOG_DIR="$(cd -- "$LOG_DIR" && pwd)"
+OUTPUT_DIR="$(cd -- "$OUTPUT_DIR" && pwd)"
 exec 9>"${LOG_DIR}/run.lock"
 flock -n 9 || { echo 'Another run.sh is starting.' >&2; exit 1; }
 existing="$(tmux list-windows -t "$session" -F '#{window_name}')"
@@ -23,6 +25,10 @@ for name in "${windows[@]}" STFBFilePlayer-0 STFBFilePlayer-1 STFBFilePlayer-2; 
     exit 1
   fi
 done
+# Parameters use auto-assigned -0/-1/-2 IDs. Another running DAQ would
+# change these IDs and could receive our configuration: reject it first.
+source "${HERE}/startup-check.sh"
+check_registry_idle
 bash "${HERE}/mq-param2.sh"
 bash "${HERE}/topology2.sh"
 # Pass effective configuration explicitly: a tmux server may have an older environment.
@@ -35,6 +41,8 @@ for id in "${windows[@]}"; do
   printf -v command 'exec bash %q %q %q' "${HERE}/device-window.sh" "$device" "$id"
   tmux new-window -d -t "${session}:" -n "$id" -c "$HERE" "${env_args[@]}" "$command" 9>&-
 done
+wait_for_devices "${windows[@]}"
+
 echo "Live source: ${AMANEQ_IP}, TDC_TYPE=${TDC_TYPE}; output: ${OUTPUT_DIR}"
 echo 'Created four live-acquisition device windows in the current tmux session.'
 echo 'Select all four devices in web-ctrl: Init Device and Connection -> Init Task -> Run.'
