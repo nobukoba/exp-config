@@ -67,17 +67,10 @@ REDIS_HOST=redis REDIS_PORT=6379 NESTDAQ_HOST_IP=192.168.1.10 ./run.sh
 
 ## 再生速度（STFBFilePlayer）
 
-STFBFilePlayer の `wait` オプションで、1回の `ConditionalRun()` による送信処理後の待ち時間をミリ秒単位で設定できます。
-既定値は `STFB_WAIT_MS=100`（100 ms）です。3台すべてに適用されます。0 にすると待機しません。
-
-```bash
-STFB_WAIT_MS=500 ./run.sh   # 送信処理ごとに 500 ms 待機
-STFB_WAIT_MS=0 ./run.sh     # 待機なし（従来の再生速度）
-```
-
-`mq-param.sh` が Redis DB 2 の `parameters:STFBFilePlayer-{0,1,2}` に `wait` を設定します。
-変更した値を確実に反映するには web-ctrl で正常終了し、デバイスを再起動して `Init Task` を実行してください。
-これは再生速度を遅くしますが、ファイル終端まで再生したら STFBFilePlayer は READY に戻ります。ループ再生はしません。
+`mq-param.sh` で3台の STFBFilePlayer に `wait 500` を直書きしています。
+各送信処理後に500 ms待機します。環境変数による速度指定は不要です。
+再生終了後は READY に戻り、ループ再生はしません。
+変更を反映するには web-ctrl で正常終了した後に再起動してください。
 
 ## raw データと実装の出典
 
