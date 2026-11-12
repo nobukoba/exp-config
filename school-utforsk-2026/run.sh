@@ -3,7 +3,7 @@ set -euo pipefail
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 export NESTDAQ_CONFIG="${HERE}/config.sh"
 source "$NESTDAQ_CONFIG"
-for cmd in redis-cli STFBFilePlayer TimeFrameBuilder flock sha256sum; do
+for cmd in redis-cli STFBFilePlayer TimeFrameBuilder FileSink flock sha256sum; do
   command -v "$cmd" >/dev/null || { echo "Command not found: $cmd (run inside the SPADI DAQ container)" >&2; exit 1; }
 done
 mkdir -p "$LOG_DIR"
@@ -41,6 +41,7 @@ launch() {
   pids+=("$!")
   echo "Started ${id}: PID $!, log ${LOG_DIR}/${id}.log"
 }
+launch FileSink FileSink-0
 launch TimeFrameBuilder TimeFrameBuilder-0
 for i in 0 1 2; do launch STFBFilePlayer "STFBFilePlayer-${i}"; done
 echo 'Use web-ctrl: Init Device and Connection -> Init Task -> Run.'

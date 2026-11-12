@@ -1,8 +1,8 @@
 # school-utforsk-2026
 
 SPADI の `user-daq` / `devel-daq` / `full` コンテナ内で実行する、RARiS AC-LGAD の再生例です。
-`STFBFilePlayer` 3個 → `TimeFrameBuilder` 1個を起動します。
-Redis、web-ctrl、xterm、tmux は起動しません。FileSink は含みません。
+`STFBFilePlayer` 3個 → `TimeFrameBuilder` 1個 → `FileSink` 1個を起動します。
+Redis、web-ctrl、xterm、tmux は起動しません。
 
 ## 実行
 
@@ -20,15 +20,28 @@ web-ctrl も同じ Redis の daq_service DB に接続してください。
 DB の flush は行いませんが、同名サービスの設定を更新するため、他の DAQ と同時使用しないでください。
 別構成の古い topology キーが残っていない専用の Redis DB を使用してください。
 
-web-ctrl で `STFBFilePlayer-0`〜`2` と `TimeFrameBuilder-0` を選び、run number を設定し、
+web-ctrl で `STFBFilePlayer-0`〜`2` 、`TimeFrameBuilder-0`、`FileSink-0` を選び、run number を設定し、
 **Init Device and Connection → Init Task → Run** の順に操作します。
 各段階で全プロセスの状態遷移を確認してください。
-出力は `tcp://127.0.0.1:5501`（PUSH）です。受信・保存する場合は PULL の consumer を別途接続してください。
-consumer がないと出力待ちになる場合があります。
+TimeFrameBuilder の出力 `tcp://127.0.0.1:5501` を FileSink が受信し、
+既定では `output/runNNNNNN.dat`（web-ctrl で指定した run number）に保存します。
+DQM 出力は `tcp://127.0.0.1:5502`（PUB、購読なしでも動作）です。
+同じ PUSH 出力に別の PULL consumer を接続するとデータが分配されるため、保存中は接続しないでください。
+
+保存先を変更する例（コンテナから書き込める、永続化されたパスを指定）:
+
+```bash
+OUTPUT_DIR=/workspace/replay-output ./run.sh
+```
+
+入力データは変更しません。`openmode=create` により、同じ出力ファイルがある場合は開かず、上書きを防ぎます。
+web-ctrl で未使用の run number を指定してください。保存エラーは `logs/FileSink-0.log` で確認できます。
+保存の完了には web-ctrl の **Stop** を使い、FileSink が停止したことを確認してください。
+Ctrl+C は強制終了用です。通常の保存完了操作には使わないでください。
 
 終了時は web-ctrl で **Stop → Reset Task → Reset Device → End**。
 `run.sh` はいずれかのプロセスが終了すると残りも停止します。
-端末で Ctrl+C を押しても起動した4プロセスを停止します。Redis と web-ctrl はそのままです。
+端末で Ctrl+C を押しても起動した5プロセスを停止します。Redis と web-ctrl はそのままです。
 ログは `logs/<device-id>.log` に保存され、再起動すると上書きされます。
 
 環境変数で接続先やポートを変更できます（`config.sh` 参照）。例:
