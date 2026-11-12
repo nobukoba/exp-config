@@ -14,8 +14,8 @@ endpoint() {
 : "${TFB_OUTPUT_HOST:=127.0.0.1}"
 : "${TFB_OUTPUT_PORT:=5501}"
 endpoint STFBFilePlayer out type push method connect autoSubChannel true enable-uds false
-endpoint TimeFrameBuilder in type pull method bind enable-uds false address "tcp://${STF_TO_TFB_HOST}:${STF_TO_TFB_PORT}"
-endpoint TimeFrameBuilder out type push method bind enable-uds false address "tcp://${TFB_OUTPUT_HOST}:${TFB_OUTPUT_PORT}"
+endpoint TimeFrameBuilder in type pull method bind waitForPeerConnection false enable-uds false address "tcp://${STF_TO_TFB_HOST}:${STF_TO_TFB_PORT}"
+endpoint TimeFrameBuilder out type push method bind waitForPeerConnection false enable-uds false address "tcp://${TFB_OUTPUT_HOST}:${TFB_OUTPUT_PORT}"
 redis -n "$DAQSERVICE_DB" set 'daq_service:topology:link:STFBFilePlayer:out,TimeFrameBuilder:in' none >/dev/null
 endpoint FileSink in type pull method connect autoSubChannel true enable-uds false
 # The pinned FileSink sends a DQM copy even without a monitor subscriber.
